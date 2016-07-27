@@ -1,0 +1,13 @@
+---- GPIO_Mode_In_PU_IT Matches (3 in 2 files) ----
+Stm8l10x_gpio.c (e:\ble\...\src):87
+  *            @arg GPIO_Mode_In_PU_IT: Input pull-up, external interrupt  
+  *            @arg GPIO_Mode_Out_OD_Low_Fast: Output open-drain, low level, 10MHz
+  *            @arg GPIO_Mode_Out_PP_Low_Fast: Output push-pull, low level, 10MHz
+Stm8l10x_gpio.h (e:\ble\...\inc):60
+  GPIO_Mode_In_PU_IT         = (uint8_t)0x60,   /*!< Input pull-up, external interrupt */
+  GPIO_Mode_Out_OD_Low_Fast  = (uint8_t)0xA0,   /*!< Output open-drain, low level, 10MHz */
+  GPIO_Mode_Out_PP_Low_Fast  = (uint8_t)0xE0,   /*!< Output push-pull, low level, 10MHz */
+Stm8l10x_gpio.h (e:\ble\...\inc):115
+   ((MODE) == GPIO_Mode_In_PU_IT)       || \
+   ((MODE) == GPIO_Mode_Out_OD_Low_Fast)  || \
+   ((MODE) == GPIO_Mode_Out_PP_Low_Fast)  || \
