@@ -694,7 +694,7 @@ void BLE_Beacon(void)
 			
 
 			//BLE sleep process
-            if(status & INT_TYPE_SLEEP)//sleep
+            if(status == INT_TYPE_SLEEP)//sleep
             {
                 LED_GREEN_OFF();
                                 
@@ -735,7 +735,7 @@ void BLE_Beacon(void)
                 SPI_Write_Buffer(W_TX_PAYLOAD, adv_data, sizeof(adv_data));
 
             }
-            else if (status & INT_TYPE_WAKEUP)	//BLE wakeup process
+            else if (status == INT_TYPE_WAKEUP)	//BLE wakeup process
             {
                 LED_GREEN_ON();
                 
@@ -748,7 +748,9 @@ void BLE_Beacon(void)
             }
             else
             {
-                //other interrupt BLE Enter sloop
+                //other interrupt
+                SPI_Write_Reg(INT_FLAG|0X20, 0xff);
+                //BLE Enter sleep
                 BLE_Mode_Sleep();
             }
 
