@@ -383,8 +383,7 @@ void BLE_send(void)
 	temp0[0] = 0x00;
 	temp0[1] = 0x80;
 	temp0[2] = 0x01;
-	temp0[3] = 0x00;
-	SPI_Write_Buffer(0x10,temp0,4);
+	SPI_Write_Buffer(0x10,temp0,3);
 
     SPI_Write_Reg(0x2f, 0x01);
     
@@ -423,12 +422,6 @@ void BLE_send(void)
 	temp0[1] = 0x00;
 	SPI_Write_Buffer(0x13,temp0,2);
 	
-	temp0[0] = 0x00;
-	temp0[1] = 0x80;
-	temp0[2] = 0x01;
-	temp0[3] = 0x10;
-	SPI_Write_Buffer(0x10,temp0,4);
-		
 	SPI_Write_Reg(0x50, 0x56);
 	SPI_Write_Reg(0x20,0x01);
 }
