@@ -49,12 +49,7 @@ void SPI_Write_Byte(uint8_t data1)
         __asm("nop");
         __asm("nop");
 
-	    __asm("nop");
-        __asm("nop");
-        __asm("nop");
-        __asm("nop");
-
-		data1<<=1;
+	data1<<=1;
 	}
 	BLE_SCK_CLR();
 
@@ -84,10 +79,6 @@ uint8_t SPI_Read_Byte(void)
 		__asm("nop");
 		__asm("nop");
         
-		__asm("nop");
-		__asm("nop");
-		__asm("nop");
-		__asm("nop");
 
 		BLE_SCK_SET(); 
 
@@ -116,10 +107,10 @@ void SPI_Write_Reg(uint8_t reg, uint8_t data)
 { 
 	BLE_CSN_CLR();
 	
-	Delay_us(10);
+	//Delay_us(10);
 	SPI_Write_Byte(reg);
 	SPI_Write_Byte(data);
-	Delay_us(10);
+	//Delay_us(10);
 
 	BLE_CSN_SET();
 } 
@@ -136,10 +127,10 @@ uint8_t SPI_Read_Reg(uint8_t reg)
 	uint8_t temp0=0;
 	BLE_CSN_CLR();
 	
-	Delay_us(10);
+	//Delay_us(10);
 	SPI_Write_Byte(reg);
 	temp0 = SPI_Read_Byte();
-	Delay_us(10);
+	//Delay_us(10);
 
 	BLE_CSN_SET();
 	return temp0;
@@ -156,7 +147,7 @@ void SPI_Write_Buffer(uint8_t reg, uint8_t *dataBuf, uint8_t len)
 	uint8_t temp0=0;
 	BLE_CSN_CLR();
 	
-	Delay_us(10);
+	//Delay_us(10);
 	SPI_Write_Byte(reg|0x20);
 
 	for(temp0=0;temp0<len;temp0++)
@@ -165,7 +156,7 @@ void SPI_Write_Buffer(uint8_t reg, uint8_t *dataBuf, uint8_t len)
 		dataBuf++;
 	}
 	
-	Delay_us(10);
+	//Delay_us(10);
 
 	BLE_CSN_SET();
 } 
@@ -181,7 +172,7 @@ void SPI_Read_Buffer(uint8_t reg, uint8_t *dataBuf, uint8_t len)
 { 
   uint8_t temp0=0;
 	BLE_CSN_CLR();
-	Delay_us(20);
+	//Delay_us(20);
 	
 	SPI_Write_Byte(reg);
 
@@ -189,7 +180,7 @@ void SPI_Read_Buffer(uint8_t reg, uint8_t *dataBuf, uint8_t len)
 	{
 		*(dataBuf+temp0)=SPI_Read_Byte();
 	}
-	Delay_us(20);
+	//Delay_us(20);
 
 	BLE_CSN_SET();
 } 
