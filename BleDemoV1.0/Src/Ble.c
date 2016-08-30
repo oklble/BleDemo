@@ -477,9 +477,9 @@ void BLE_Init(void)
 
 	Uart_Send_String("BLE init \r\n");
 
-    SPI_Write_Reg(0x50, 0x51);
+	SPI_Write_Reg(0x50, 0x51);
 	SPI_Write_Reg(0x50, 0x53);
-    SPI_Write_Reg(0x35, 0x00);  
+	SPI_Write_Reg(0x35, 0x00);  
     
     do{   
         data_buf[0] = 0;
@@ -506,19 +506,19 @@ void BLE_Init(void)
 	Uart_Send_String("\r\n");
 
 	//power down,tx  //add this for hot reset
-	SPI_Write_Reg(0X20, 0x08); 
+	SPI_Write_Reg(0X20, 0x78); 
 	//1Mbps
 	SPI_Write_Reg(0X26, 0x06);
 	//power up
-    SPI_Write_Reg(0X20, 0x0a); 
+	SPI_Write_Reg(0X20, 0x7a); 
 	//xtal off for v16w1
-    SPI_Write_Reg(0x3d, 0x18); 
-    SPI_Write_Reg(0x50, 0x56); 
-
-    BLE_Mode_Sleep();
+	SPI_Write_Reg(0x3d, 0x18); 
+	SPI_Write_Reg(0x50, 0x56); 
+	
+	BLE_Mode_Sleep();
     
 	//read BLE address. BLE MAC Address
-    SPI_Read_Buffer(0x08, ble_Addr, 6);
+	SPI_Read_Buffer(0x08, ble_Addr, 6);
 	
 	Uart_Send_String("BleAddr=");
 	Uart_Send_Byte(ble_Addr[5]);
