@@ -607,19 +607,19 @@ void BLE_Beacon(void)
     LED_RED_ON();
 	
 	
-	//set BLE TX default channel:37.38.39
-	SPI_Write_Reg(CH_NO|0X20, ch);
-	//BLT FIFO write adv_data . max len:31 byte
-	SPI_Write_Buffer(W_TX_PAYLOAD, adv_data, sizeof(adv_data));
+    //set BLE TX default channel:37.38.39
+    SPI_Write_Reg(CH_NO|0X20, ch);
+    //BLT FIFO write adv_data . max len:31 byte
+    SPI_Write_Buffer(W_TX_PAYLOAD, adv_data, sizeof(adv_data));
 	
-	//set BLT PDU length:adv_data+6 mac adress.  
-	bank_buf[0] = 0x02;//0x42;
-	bank_buf[1] = sizeof(adv_data)+6;
+    //set BLT PDU length:adv_data+6 mac adress.  
+    bank_buf[0] = 0x02;//0x42;
+    bank_buf[1] = sizeof(adv_data)+6;
 	
-	//PDU TYPE: 2  non-connectable undirected advertising . tx add:random address
-	SPI_Write_Buffer(ADV_HDR_TX, bank_buf, 2);
+    //PDU TYPE: 2  non-connectable undirected advertising . tx add:random address
+    SPI_Write_Buffer(ADV_HDR_TX, bank_buf, 2);
 
-	Uart_Send_String("BLE_Beacon mode ");
+    Uart_Send_String("BLE_Beacon mode ");
     Uart_Send_Byte(Work_Mode-'0');
     Uart_Send_String("\r\n");
 	
@@ -628,65 +628,66 @@ void BLE_Beacon(void)
     //BLE Wakeup mode
     BLE_Mode_Wakeup();
     
-	while(1)
+    tick = CNT_GUARD;
+    
+    while(1)
+    {
+	//	//Workmode change .
+	if((Rx_Tx_Buffer_Cnt == 1))
 	{
-		//	//Workmode change .
-		if((Rx_Tx_Buffer_Cnt == 1))
-		{
-			Work_Mode = Rx_Buffer[0];
-			Rx_Tx_Buffer_Cnt = 0;
-			//sleep(power down)
+	    Work_Mode = Rx_Buffer[0];
+	    Rx_Tx_Buffer_Cnt = 0;
+	    //sleep(power down)
             SPI_Write_Reg(0x50, 0x51); 
-            SPI_Write_Reg(0x20, 0x08);
+            SPI_Write_Reg(0x20, 0x78);
             SPI_Write_Reg(0x50, 0x56); 
             BLE_Mode_Sleep(); 
             //exit loop . 
-			break;
-		}
+	    break;
+	}
 
-		//remote .key press & up data 
-		if(Work_Mode == Work_Mode_Remote)
-		{   
-			if(KEY_GET() == RESET)
+	//remote .key press & up data 
+	if(Work_Mode == Work_Mode_Remote)
+	{   
+		if(KEY_GET() == RESET)
+		{
+			for(temp0=0;temp0<(sizeof(Beacon_Key_Press_adv_data)/sizeof(uint8_t));temp0++)
 			{
-				for(temp0=0;temp0<(sizeof(Beacon_Key_Press_adv_data)/sizeof(uint8_t));temp0++)
-				{
-					adv_data[temp0] = Beacon_Key_Press_adv_data[temp0];
-				}
+				adv_data[temp0] = Beacon_Key_Press_adv_data[temp0];
 			}
-			else
+		}
+		else
+		{
+			for(temp0=0;temp0<(sizeof(Beacon_Key_uP_adv_data)/sizeof(uint8_t));temp0++)
 			{
-				for(temp0=0;temp0<(sizeof(Beacon_Key_uP_adv_data)/sizeof(uint8_t));temp0++)
-				{
-					adv_data[temp0] = Beacon_Key_uP_adv_data[temp0];
-				}
-
+				adv_data[temp0] = Beacon_Key_uP_adv_data[temp0];
 			}
 
 		}
 
+	}
+
 		
 
-		//BLE IRQ LOW 
-		if (!BLE_IRQ_GET())
-		{
-			//clear interrupt flag
-			status = SPI_Read_Reg(INT_FLAG);
-			SPI_Write_Reg(INT_FLAG|0X20, status);
+	//BLE IRQ LOW 
+	if (!BLE_IRQ_GET())
+	{
+	    //clear interrupt flag
+	    status = SPI_Read_Reg(INT_FLAG);
+	    SPI_Write_Reg(INT_FLAG|0X20, status);
 			
+	    //Uart_Send_String("BLE_IRQ LOW work status=");
+	    //Uart_Send_Byte(status);
+	    //Uart_Send_String("\r\n");
 			
-			//Uart_Send_String("BLE_IRQ LOW work status=");
-			//Uart_Send_Byte(status);
-			//Uart_Send_String("\r\n");
-			
-			//Tx done process
-                if(status == 0xFF)
-		{
-			BLE_Mode_Sleep();
-			BLE_Send_done();
-        	}
+	    //Tx done process
+            if(status == 0xFF)
+	    {
+		BLE_Mode_Sleep();
+		BLE_Send_done();
+            }
 		
-		//BLE sleep process
+	    //BLE sleep process
             else if(status == INT_TYPE_SLEEP)//sleep
             {
                 LED_GREEN_OFF();
