@@ -128,7 +128,7 @@ void Init_Clock(void)
 	CLK_MasterPrescalerConfig(CLK_MasterPrescaler_HSIDiv1);
 
 	// TIM2&USART clock enable .
-	//CLK_PeripheralClockConfig(CLK_Peripheral_TIM2,ENABLE);
+	CLK_PeripheralClockConfig(CLK_Peripheral_TIM2,ENABLE);
 	CLK_PeripheralClockConfig(CLK_Peripheral_USART,ENABLE);
 }
 
@@ -148,7 +148,8 @@ void Init_Timer(void)
 	//enable tim2 flag .enable interrupt flag
 	TIM2_ITConfig(TIM2_IT_Update, ENABLE);
 	// disable TIM2 
-	TIM2_Cmd(DISABLE);	
+	//TIM2_Cmd(DISABLE);
+	TIM2_Cmd(ENABLE);
 }
 
 /*******************************************************************************
@@ -170,7 +171,7 @@ void Init_System(void)
 	Uart_Send_String("\r\n");
 	Uart_Send_String("----------------------------------------------------------------------------------\r\n");
 	Uart_Send_String("----------------------------------------------------------------------------------\r\n");
-	Uart_Send_String("                                      ¿∂—¿4.0 ≤‚ ‘≥Ã–Ú                            \r\n");
+	Uart_Send_String("                                      √Ä¬∂√ë√Ä4.0 ¬≤√¢√ä√î¬≥√å√ê√≤                            \r\n");
 	Uart_Send_String("----------------------------------------------------------------------------------\r\n");
 	Uart_Send_String("----------------------------------------------------------------------------------\r\n");
 	Uart_Send_String("------------------------STM8L10x_StdPeriph_Driver V1.2.1--------------------------\r\n");
@@ -183,10 +184,10 @@ void Init_System(void)
 	Uart_Send_String("\r\n");
 
 
-	Uart_Send_String("    »’∆⁄: ");
+	Uart_Send_String("    √à√ï√Ü√ö: ");
 	//C macro
 	Uart_Send_String(__DATE__);
-	Uart_Send_String("          ±º‰: ");
+	Uart_Send_String("         √ä¬±¬º√§: ");
 	//C macro
 	Uart_Send_String(__TIME__);
 	Uart_Send_String("\r\n");
