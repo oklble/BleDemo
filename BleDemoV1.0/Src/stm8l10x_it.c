@@ -227,12 +227,15 @@ INTERRUPT_HANDLER(COMP_IRQHandler, 18)
   * @param  None
   * @retval None
   */
+unsigned short tick = 0;
 INTERRUPT_HANDLER(TIM2_UPD_OVF_TRG_BRK_IRQHandler, 19)
 {
 	//TIM2_ClearITPendingBit(TIM2_IT_Update);
     /* In order to detect unexpected events during development,
        it is recommended to set a breakpoint on the following instruction.
     */
+    TIM2_ClearFlag(TIM2_FLAG_Update);
+    if(tick > 0) tick--;
 }
 
 /**
