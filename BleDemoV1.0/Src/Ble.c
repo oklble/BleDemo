@@ -15,7 +15,11 @@
 /* Private define ------------------------------------------------------------*/
 
 /* Private macro -------------------------------------------------------------*/
+//if IRQ not gen in this peroid(ms), abnormal occur, should re-init
+//this peroid should greater than wakeup time
+#define CNT_GUARD 1500
 /* Private variables ---------------------------------------------------------*/
+extern unsigned short tick;
 
 //static unsigned char adv_data[18] = {2,1,4, 0x0a,0x09,0x4d,0x41,0x43,0x52,0x4f,0x47,0x49,0x47,0x41,0x03,0xff,0x00,0x09};
 //BLE ADV_data .
@@ -390,17 +394,16 @@ void BLE_send(void)
 	temp0[0] = 0x00;
 	temp0[1] = 0x6e;
 	SPI_Write_Buffer(0x11,temp0,2); 
-	SPI_Write_Reg(0x3d,0x00);
-	SPI_Write_Reg(0x3d,0x02);
-
+	SPI_Write_Reg(0x3d,0x04);
+	SPI_Write_Reg(0x3d,0x06);
 	
 	Delay_us(10);
 		
-	SPI_Write_Reg(0x3d,0x03);
+	SPI_Write_Reg(0x3d,0x07);
 	
 	Delay_us(40);
 	
-	SPI_Write_Reg(0x3d,0x01);
+	SPI_Write_Reg(0x3d,0x05);
 	
 	Delay_us(120);
 
@@ -435,7 +438,7 @@ void BLE_send(void)
 *******************************************************************************/
 void BLE_Send_done(void)
 {
-	uint8_t temp0[3];
+    uint8_t temp0[3];
 
     SPI_Write_Reg(0x50, 0x53);
     SPI_Write_Reg(0x31,0x24);	
@@ -443,7 +446,7 @@ void BLE_Send_done(void)
     temp0[1] = 0x00;
     SPI_Write_Buffer(0x0f, temp0, 2);
     
-    SPI_Write_Reg(0x3e,0x20);
+    SPI_Write_Reg(0x3e,0x10);
     temp0[0] = 0x00;
     temp0[1] = 0x00;
     temp0[2] = 0x81;
@@ -454,10 +457,10 @@ void BLE_Send_done(void)
     
     Delay_us(100);
     
-	SPI_Write_Reg(0x33,0x01);
+    SPI_Write_Reg(0x33,0x01);
     SPI_Write_Reg(0x35,0x00);
-        
-    SPI_Write_Reg(0x50, 0x56);
+    SPI_Write_Reg(0x3d,0x18);
+    SPI_Write_Reg(0x50,0x56);
 }
 
 /*******************************************************************************
@@ -677,30 +680,26 @@ void BLE_Beacon(void)
 			//Uart_Send_String("\r\n");
 			
 			//Tx done process
-            if(status == 0xFF)
-			{
-				BLE_Mode_Sleep();
-				BLE_Send_done();
-				
-				continue;
-            }
-			
-
-			//BLE sleep process
-            if(status == INT_TYPE_SLEEP)//sleep
+                if(status == 0xFF)
+		{
+			BLE_Mode_Sleep();
+			BLE_Send_done();
+        	}
+		
+		//BLE sleep process
+            else if(status == INT_TYPE_SLEEP)//sleep
             {
                 LED_GREEN_OFF();
                                 
-				//BLE channel 
+		//BLE channel 
                 if (++ch > 39)
                 {
                     ch = 37; 
                 }
 				
                 BLE_Get_Clock(&lfclk, &hfclk);
-                //wakeup_time = lfclk + (INTERVAL * LFCLK_625US);
                 
-                wakeup_time = lfclk + BLE_INTERVAL_TIME;//(INTERVAL * LFCLK_1MS);
+                wakeup_time = lfclk + BLE_INTERVAL_TIME;
                 //wakeup_time
                 bank_buf[0] = 0x00; 
                 bank_buf[1] = wakeup_time & 0xff;
@@ -724,7 +723,7 @@ void BLE_Beacon(void)
                 }
                 SPI_Write_Reg(0x50, 0x56);
 
-   				//BLT FIFO write adv_data . max len:31 byte
+   		//BLT FIFO write adv_data . max len:31 byte
                 SPI_Write_Buffer(W_TX_PAYLOAD, adv_data, sizeof(adv_data));
 
             }
@@ -732,7 +731,7 @@ void BLE_Beacon(void)
             {
                 LED_GREEN_ON();
                 
-				BLE_send();
+		BLE_send();
                 //BLE work mode:TX mode
                 SPI_Write_Reg(MODE_TYPE|0X20, RADIO_MODE_ADV_TX);
 				
@@ -747,10 +746,14 @@ void BLE_Beacon(void)
                 BLE_Mode_Sleep();
             }
 
-	        ///printf(" %x", status);
+	    tick = CNT_GUARD;
 		
-		}
+	}else{
+	    if(tick == 0){
+	    	break; //reinit ble in main
+	    }
 	}
+    }
     
     LED_RED_OFF();
     LED_GREEN_OFF();
