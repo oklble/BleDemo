@@ -15,9 +15,9 @@
 /* Private define ------------------------------------------------------------*/
 
 /* Private macro -------------------------------------------------------------*/
-//if IRQ not gen in this peroid(ms), abnormal occur, should re-init
-//this peroid should greater than wakeup time
-#define CNT_GUARD 1500
+//sleep interval(ms) between each channel
+#define CNT_SLEEP 150
+
 /* Private variables ---------------------------------------------------------*/
 extern unsigned short tick;
 
@@ -483,7 +483,9 @@ void BLE_Init(void)
 	SPI_Write_Reg(0x50, 0x51);
 	SPI_Write_Reg(0x50, 0x53);
 	SPI_Write_Reg(0x35, 0x00);  
-    
+    	//xtal off for v16w1
+	SPI_Write_Reg(0x3d, 0x18); 
+	
     do{   
         data_buf[0] = 0;
         data_buf[1] = 0;
@@ -514,8 +516,6 @@ void BLE_Init(void)
 	SPI_Write_Reg(0X26, 0x06);
 	//power up
 	SPI_Write_Reg(0X20, 0x7a); 
-	//xtal off for v16w1
-	SPI_Write_Reg(0x3d, 0x18); 
 	SPI_Write_Reg(0x50, 0x56); 
 	
 	BLE_Mode_Sleep();
@@ -628,7 +628,6 @@ void BLE_Beacon(void)
     //BLE Wakeup mode
     BLE_Mode_Wakeup();
     
-    tick = CNT_GUARD;
     
     while(1)
     {
@@ -691,6 +690,7 @@ void BLE_Beacon(void)
             else if(status == INT_TYPE_SLEEP)//sleep
             {
                 LED_GREEN_OFF();
+		IWDG_ReloadCounter();
                                 
 		//BLE channel 
                 if (++ch > 39)
@@ -698,15 +698,15 @@ void BLE_Beacon(void)
                     ch = 37; 
                 }
 				
-                BLE_Get_Clock(&lfclk, &hfclk);
+                //BLE_Get_Clock(&lfclk, &hfclk);
                 
-                wakeup_time = lfclk + BLE_INTERVAL_TIME;
-                //wakeup_time
-                bank_buf[0] = 0x00; 
-                bank_buf[1] = wakeup_time & 0xff;
-                bank_buf[2] = (wakeup_time >> 8) & 0xff;
-                bank_buf[3] = (wakeup_time >> 16) & 0xff;
-                SPI_Write_Buffer(SLEEP_WAKEUP, bank_buf, 4);
+                //wakeup_time = lfclk + BLE_INTERVAL_TIME;
+                ////wakeup_time
+                //bank_buf[0] = 0x00; 
+                //bank_buf[1] = wakeup_time & 0xff;
+                //bank_buf[2] = (wakeup_time >> 8) & 0xff;
+                //bank_buf[3] = (wakeup_time >> 16) & 0xff;
+                //SPI_Write_Buffer(SLEEP_WAKEUP, bank_buf, 4);
 
                 SPI_Write_Reg(CH_NO|0X20, ch);
                 SPI_Write_Reg(0x50, 0x51); 
@@ -726,6 +726,8 @@ void BLE_Beacon(void)
 
    		//BLT FIFO write adv_data . max len:31 byte
                 SPI_Write_Buffer(W_TX_PAYLOAD, adv_data, sizeof(adv_data));
+		    
+		tick = CNT_SLEEP;
 
             }
             else if (status == INT_TYPE_WAKEUP)	//BLE wakeup process
@@ -746,12 +748,17 @@ void BLE_Beacon(void)
                 //BLE Enter sleep
                 BLE_Mode_Sleep();
             }
-
-	    tick = CNT_GUARD;
 		
 	}else{
 	    if(tick == 0){
-	    	break; //reinit ble in main
+	    	SPI_Write_Reg(0x50, 0x53);
+            	SPI_Write_Reg(0x3d, 0x1e);
+            	SPI_Write_Reg(0x50, 0x56);
+            
+            	tick = 2; //2ms delay then wakeup
+            	while(tick){};
+            	BLE_Mode_Wakeup();
+            	tick = CNT_SLEEP;
 	    }
 	}
     }
