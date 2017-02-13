@@ -303,26 +303,6 @@ void BLE_Get_Clock(uint32_t *lfclk, uint32_t *hfclk)
 }	
 
 /*******************************************************************************
-* Function   :     	BLE_Set_GenericTimer	                                                                                                     
-* Parameter  :     	uint32_t lfclk                    
-* Returns    :     	void            
-* Description:      
-* Note:      : 
-*******************************************************************************/
-void BLE_Set_GenericTimer(uint32_t lfclk)
-{
-	uint8_t temp0[6];
-    temp0[0] = 0x04;  
-    temp0[1] = lfclk & 0xFF;
-    temp0[2] = (lfclk >> 8) & 0xFF;
-    temp0[3] = (lfclk >> 16) & 0xFF;
-    temp0[4] = 0x00;
-    temp0[5] = 0x00;
-
-	SPI_Write_Buffer(SLEEP_WAKEUP,temp0,6);  
-}
-
-/*******************************************************************************
 * Function   :     	BLE_Set_TimeOut	                                                                                                     
 * Parameter  :     	uint32_t data_us                   
 * Returns    :     	void            
@@ -333,7 +313,7 @@ void BLE_Set_TimeOut(uint32_t data_us)
 {
 	uint8_t temp0[3];
 
-	if(data_us < 10000)
+	if(data_us < 0x10000)
 	{
         temp0[0] = data_us & 0xff;
         temp0[1] = (data_us >> 8) & 0xff;
@@ -361,15 +341,15 @@ void BLE_Set_TimeOut(uint32_t data_us)
 *******************************************************************************/
 void BLE_send(void)
 {
-	uint8_t temp0[4];
+    uint8_t temp0[4];
 	
     SPI_Write_Reg(0x20, 0x00);
     SPI_Write_Reg(0x50, 0x53);
-	SPI_Write_Reg(0x33,0x01);
-	SPI_Write_Reg(0x35,0x01);
+    SPI_Write_Reg(0x33,0x01);
+    SPI_Write_Reg(0x35,0x01);
 
 	//Calibration frequency .
-	temp0[0] = 0xcf;//bf; 
+	temp0[0] = 0xcf;
 	temp0[1] = 0x00;  
 	SPI_Write_Buffer(0x14,temp0,2);
 	
@@ -381,7 +361,7 @@ void BLE_send(void)
 	temp0[2] = 0x01;
 	SPI_Write_Buffer(0x12,temp0,3);
 	temp0[0] = 0x01;
-	temp0[1] = 0x02;
+	temp0[1] = 0x22;
 	SPI_Write_Buffer(0x13,temp0,2);
 	
 	temp0[0] = 0x00;
@@ -422,7 +402,7 @@ void BLE_send(void)
 	SPI_Write_Buffer(0x11,temp0,4);
 
 	temp0[0] = 0x01;
-	temp0[1] = 0x00;
+	temp0[1] = 0x20;
 	SPI_Write_Buffer(0x13,temp0,2);
 	
 	SPI_Write_Reg(0x50, 0x56);
@@ -452,7 +432,7 @@ void BLE_Send_done(void)
     temp0[2] = 0x81;
     SPI_Write_Buffer(0x12, temp0, 3);
     temp0[0] = 0x81;
-    temp0[1] = 0x00;
+    temp0[1] = 0x20;
     SPI_Write_Buffer(0x13, temp0, 2);
     
     Delay_us(100);
@@ -517,6 +497,7 @@ void BLE_Init(void)
 	//power up
 	SPI_Write_Reg(0X20, 0x7a); 
 	SPI_Write_Reg(0x50, 0x56); 
+	SPI_Write_Reg(0x20, 0x01); 
 	
 	BLE_Mode_Sleep();
     
@@ -619,6 +600,38 @@ void BLE_Beacon(void)
     //PDU TYPE: 2  non-connectable undirected advertising . tx add:random address
     SPI_Write_Buffer(ADV_HDR_TX, bank_buf, 2);
 
+    SPI_Write_Reg(0x50, 0x53);
+    bank_buf[1] = SPI_Read_Reg(0x08);
+    if(0 == bank_buf[1]){
+      bank_buf[1] = 0x11;
+    }
+    bank_buf[0] = 0xc0;
+    bank_buf[2] = 0x1D; 
+    SPI_Write_Buffer(0x4, bank_buf, 3);
+
+    //calibration
+    SPI_Write_Reg(0x3F, 0x03);
+    do{
+        bank_buf[0] = SPI_Read_Reg(0x1F);
+    }while(bank_buf[0]&0x03);
+
+    SPI_Write_Reg(0x3F, 0x03);
+    do{
+        bank_buf[0] = SPI_Read_Reg(0x1F);
+    }while(bank_buf[0]&0x03);
+
+    SPI_Write_Reg(0x35, 0x01);
+    SPI_Write_Reg(0x32, 0x88); 
+    bank_buf[0] = 0x01;
+    bank_buf[1] = 0x21;
+    SPI_Write_Buffer(0x13, bank_buf, 2); 
+    bank_buf[0] = 0x01;
+    bank_buf[1] = 0x20;
+    SPI_Write_Buffer(0x13, bank_buf, 2); 
+    SPI_Write_Reg(0x35, 0x00);
+	
+    SPI_Write_Reg(0x50, 0x56);
+
     Uart_Send_String("BLE_Beacon mode ");
     Uart_Send_Byte(Work_Mode-'0');
     Uart_Send_String("\r\n");
@@ -697,16 +710,6 @@ void BLE_Beacon(void)
                 {
                     ch = 37; 
                 }
-				
-                //BLE_Get_Clock(&lfclk, &hfclk);
-                
-                //wakeup_time = lfclk + BLE_INTERVAL_TIME;
-                ////wakeup_time
-                //bank_buf[0] = 0x00; 
-                //bank_buf[1] = wakeup_time & 0xff;
-                //bank_buf[2] = (wakeup_time >> 8) & 0xff;
-                //bank_buf[3] = (wakeup_time >> 16) & 0xff;
-                //SPI_Write_Buffer(SLEEP_WAKEUP, bank_buf, 4);
 
                 SPI_Write_Reg(CH_NO|0X20, ch);
                 SPI_Write_Reg(0x50, 0x51); 
@@ -758,12 +761,9 @@ void BLE_Beacon(void)
             	tick = 2; //2ms delay then wakeup
             	while(tick){};
             	BLE_Mode_Wakeup();
-            	tick = CNT_SLEEP;
+            	tick = 0xffff;
 	    }
 	}
     }
-    
-    LED_RED_OFF();
-    LED_GREEN_OFF();
 	
 }
